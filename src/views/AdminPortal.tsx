@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useLanguage } from '../context/LanguageContext';
 import { DynamicAreaChart } from '../components/Charts';
+import { RulesAuditDashboard } from '../components/RulesAuditDashboard';
 import { 
   DollarSign, Percent, Store, Users, CheckCircle, XCircle, AlertCircle, 
   Search, SlidersHorizontal, Eye 
@@ -16,7 +17,7 @@ export const AdminPortal: React.FC = () => {
 
   const { t, isRTL } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'verified' | 'kyc'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'verified' | 'kyc' | 'rules'>('overview');
   const [kycRejectId, setKycRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   
@@ -106,6 +107,14 @@ export const AdminPortal: React.FC = () => {
                 {pendingOnboardCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('rules')}
+            className={`px-3 py-1.5 rounded-md cursor-pointer transition-all ${
+              activeTab === 'rules' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-650 hover:text-slate-900'
+            }`}
+          >
+            {t('rulesAuditTab')}
           </button>
         </div>
       </div>
@@ -520,6 +529,18 @@ export const AdminPortal: React.FC = () => {
               </div>
             </div>
 
+          </motion.div>
+        )}
+        {activeTab === 'rules' && (
+          <motion.div
+            key="rules-tab"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="animate-fadeIn"
+          >
+            <RulesAuditDashboard />
           </motion.div>
         )}
       </AnimatePresence>

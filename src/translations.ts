@@ -149,6 +149,7 @@ export const translations = {
     // Admin Portal
     operationsLedgerTitle: "Platform Dashboard Operations",
     onboardingApps: "Merchant Licensing Requests",
+    rulesAuditTab: "Firestore Rules Audit",
     metricsTitle: "Platform Performance Indicators",
     totalMarketGmv: "Total Marketplace GMV",
     platformCut: "Platform Captured Escrow Fees",
@@ -328,6 +329,7 @@ export const translations = {
     // Admin Portal
     operationsLedgerTitle: "عمليات وتحليلات منصة ساس",
     onboardingApps: "طلبات التراخيص والتوثيق للتجار الجدد",
+    rulesAuditTab: "قواعد حماية البيانات (Firestore)",
     metricsTitle: "مؤشرات أداء التجارة الإجمالية",
     totalMarketGmv: "حجم المعاملات الإجمالي لجميع المبيعات",
     platformCut: "رسوم العمولات المحجوزة للمنصة",

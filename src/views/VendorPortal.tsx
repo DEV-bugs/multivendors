@@ -154,6 +154,17 @@ export const VendorPortal: React.FC = () => {
   // Find active seller context
   const activeVendor = vendors.find(v => v.id === selectedVendorId) || vendors[0];
 
+  if (!vendors || vendors.length === 0 || !activeVendor) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-slate-400 font-sans space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <p className="font-bold text-sm tracking-wide">
+          {isRTL ? 'جاري تحميل بوابة التاجر...' : 'Loading Merchant Hub operational data...'}
+        </p>
+      </div>
+    );
+  }
+
   // Vendor-specific statistics
   const vendorProducts = products.filter(p => p.vendorId === activeVendor.id);
   const vendorOrders = orders.filter(o => o.vendorId === activeVendor.id);

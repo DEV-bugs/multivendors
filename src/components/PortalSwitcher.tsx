@@ -12,7 +12,7 @@ export const PortalSwitcher: React.FC = () => {
   const [showVendorDropdown, setShowVendorDropdown] = React.useState(false);
 
   // In RTL, we might want to adjust positions of absolute dropdowns or chevron sides.
-  const activeVendor = vendors.find(v => v.id === selectedVendorId) || vendors[0];
+  const activeVendor = vendors.length > 0 ? (vendors.find(v => v.id === selectedVendorId) || vendors[0]) : null;
 
   return (
     <div className="bg-slate-900 text-slate-200 border-b border-slate-800 sticky top-0 z-50 shadow-md">
