@@ -1,0 +1,6 @@
+{
+  "name": "MarketSaaS",
+  "description": "Multi-tenant B2B2C marketplace hub featuring Customer Storefronts, Vendor Catalogs, and Admin Moderation Panels.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Products offered by vendors on the platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique product custom ID" },
+        "name": { "type": "string", "description": "Name of the product" },
+        "description": { "type": "string", "description": "Product text description" },
+        "price": { "type": "number", "description": "Price in USD" },
+        "sku": { "type": "string", "description": "Stock Keeping Unit code" },
+        "stock": { "type": "number", "description": "Remaining stock amount" },
+        "category": { "type": "string", "description": "Hardware category tag" },
+        "rating": { "type": "number", "description": "User review rating (0 to 5)" },
+        "image": { "type": "string", "description": "URL structure pointing to the visual asset" },
+        "specs": { "type": "object", "description": "Key-value map of technical specifications" },
+        "vendorId": { "type": "string", "description": "Associated vendor ID" },
+        "isFeatured": { "type": "boolean", "description": "Whether the product is highlighted on storefront and homepage" },
+        "colors": { "type": "array", "description": "Available color choices list" },
+        "sizes": { "type": "array", "description": "Available size choices list" }
+      },
+      "required": ["id", "name", "price", "sku", "stock", "category", "vendorId"]
+    },
+    "Vendor": {
+      "title": "Vendor",
+      "description": "Marketplace Seller / Merchant Profile with metrics and status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique vendor profile ID" },
+        "name": { "type": "string", "description": "Company name of the vendor" },
+        "logo": { "type": "string", "description": "Vendor emoji character icon" },
+        "category": { "type": "string", "description": "Primary industry sector served" },
+        "rating": { "type": "number", "description": "Aggregated review score" },
+        "joinedDate": { "type": "string", "description": "YYYY-MM-DD formatted join date" },
+        "status": { "type": "string", "enum": ["Active", "Pending", "Suspended"] },
+        "revenue": { "type": "number", "description": "Accumulative sales GMV revenue to date" },
+        "salesCount": { "type": "number", "description": "Number of individual product units sold" },
+        "ownerEmail": { "type": "string", "description": "Email address of the business administrator" },
+        "idDocumentUrl": { "type": "string", "description": "Path to verified onboarding business license PDF/image" }
+      },
+      "required": ["id", "name", "category", "status", "revenue", "salesCount", "ownerEmail"]
+    },
+    "VendorApplication": {
+      "title": "VendorApplication",
+      "description": "Enterprise application submitted by future vendors for admin review",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Onboarding request tracking ID" },
+        "vendorName": { "type": "string", "description": "Applying company name" },
+        "ownerEmail": { "type": "string", "description": "Business contact email" },
+        "category": { "type": "string", "description": "Retail category category" },
+        "documentUrl": { "type": "string", "description": "URL to corporate certification or ID proof file" },
+        "appliedDate": { "type": "string", "description": "YYYY-MM-DD format submission date" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"] },
+        "reason": { "type": "string", "description": "Admin comments explaining rejection, if applicable" }
+      },
+      "required": ["id", "vendorName", "ownerEmail", "category", "appliedDate", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase transaction record with platform commission split info",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique order receipt transaction ID" },
+        "productNames": { "type": "array", "description": "Summary list of purchased product string titles" },
+        "customerName": { "type": "string", "description": "Customer name checkout entry" },
+        "customerEmail": { "type": "string", "description": "Customer email checkout entry" },
+        "shippingAddress": { "type": "string", "description": "Destination physical street address" },
+        "totalAmount": { "type": "number", "description": "Total payment in USD sent to vendor" },
+        "commission": { "type": "number", "description": "10% commission fee captured by administrator platform" },
+        "status": { "type": "string", "enum": ["Pending", "Shipped", "Delivered", "Cancelled"] },
+        "date": { "type": "string", "description": "YYYY-MM-DD checkout timestamp" },
+        "vendorId": { "type": "string", "description": "Target Vendor profile receiving this order" }
+      },
+      "required": ["id", "productNames", "customerName", "customerEmail", "shippingAddress", "totalAmount", "commission", "status", "date", "vendorId"]
+    }
+  },
+  "firestore": {
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Products list collections store"
+    },
+    "vendors/{vendorId}": {
+      "schema": "Vendor",
+      "description": "Registered vendors merchant profile ledger database"
+    },
+    "applications/{appId}": {
+      "schema": "VendorApplication",
+      "description": "Vendor registration request submissions docket"
+    },
+    "orders/{orderId}": {
+      "schema": "Order",
+      "description": "Financial purchase ledger split receipts"
+    }
+  }
+}

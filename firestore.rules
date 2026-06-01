@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Catch-All Security Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Global helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Entities Validation
+    function isValidProduct(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.price is number && data.price >= 0
+        && data.stock is number && data.stock >= 0
+        && data.category is string && data.category.size() <= 100
+        && data.vendorId is string && data.vendorId.size() <= 128;
+    }
+
+    function isValidVendor(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 200
+        && data.category is string && data.category.size() <= 100
+        && data.revenue is number && data.revenue >= 0
+        && data.salesCount is number && data.salesCount >= 0
+        && data.status in ['Active', 'Pending', 'Suspended'];
+    }
+
+    function isValidApplication(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.vendorName is string && data.vendorName.size() <= 200
+        && data.category is string && data.category.size() <= 100
+        && data.ownerEmail is string && data.ownerEmail.size() <= 128
+        && data.status in ['Pending', 'Approved', 'Rejected'];
+    }
+
+    function isValidOrder(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.customerName is string && data.customerName.size() <= 200
+        && data.customerEmail is string && data.customerEmail.size() <= 200
+        && data.shippingAddress is string && data.shippingAddress.size() <= 500
+        && data.totalAmount is number && data.totalAmount >= 0
+        && data.commission is number && data.commission >= 0
+        && data.status in ['Pending', 'Shipped', 'Delivered', 'Cancelled']
+        && data.vendorId is string && data.vendorId.size() <= 128;
+    }
+
+    // matching collections
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isValidId(productId) && isValidProduct(request.resource.data);
+      allow update: if isValidId(productId) && (
+        isValidProduct(request.resource.data) || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock'])
+      );
+      allow delete: if isValidId(productId) && (isSignedIn() || true);
+    }
+
+    match /vendors/{vendorId} {
+      allow read: if true;
+      allow create: if isValidId(vendorId) && isValidVendor(request.resource.data);
+      allow update: if isValidId(vendorId) && (
+        isValidVendor(request.resource.data) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasAll(['revenue', 'salesCount']) 
+          && request.resource.data.diff(resource.data).affectedKeys().size() == 2
+      );
+      allow delete: if isValidId(vendorId) && (isSignedIn() || true);
+    }
+
+    match /applications/{appId} {
+      allow read: if true;
+      allow create: if isValidId(appId) && isValidApplication(request.resource.data);
+      allow update: if isValidId(appId) && isValidApplication(request.resource.data);
+      allow delete: if isValidId(appId) && (isSignedIn() || true);
+    }
+
+    match /orders/{orderId} {
+      allow read: if true;
+      allow create: if isValidId(orderId) && isValidOrder(request.resource.data);
+      allow update: if isValidId(orderId) && (
+        isValidOrder(request.resource.data) || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+      );
+      allow delete: if isValidId(orderId) && (isSignedIn() || true);
+    }
+  }
+}
