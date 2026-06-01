@@ -73,3 +73,24 @@ export interface MarketMetrics {
   customerCount: number;
   salesCount: number;
 }
+
+export interface PortalSettings {
+  adminTitle: string;
+  adminLogo: string;
+  adminColor: 'indigo' | 'blue' | 'rose' | 'emerald' | 'amber' | 'purple' | 'slate' | 'orange';
+  vendorTitle: string;
+  vendorLogo: string;
+  vendorColor: 'indigo' | 'blue' | 'rose' | 'emerald' | 'amber' | 'purple' | 'slate' | 'orange';
+}
+
+export interface LoginLog {
+  id: string;
+  timestamp: string;
+  email: string;
+  displayName: string;
+  role: string;
+  method: 'Google' | 'Demo';
+  status: 'Success' | 'Failed';
+  ipAddress: string;
+}
+

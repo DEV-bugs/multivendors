@@ -9,18 +9,114 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+export const EM_LIST = ['⚙️', '🛡️', '📊', '🌐', '🚀', '🔮', '💡', '💎', '🎨', '👑'];
+export const VEN_EM_LIST = ['🏬', '⛺', '☀️', '👜', '👕', '🍔', '🍕', '⚙️', '💎', '🎮'];
+export const COLOR_LIST = [
+  { name: 'indigo' as const, hex: '#6366f1', label: 'Indigo' },
+  { name: 'blue' as const, hex: '#3b82f6', label: 'Blue' },
+  { name: 'rose' as const, hex: '#f43f5e', label: 'Rose' },
+  { name: 'emerald' as const, hex: '#10b981', label: 'Emerald' },
+  { name: 'amber' as const, hex: '#f59e0b', label: 'Amber' },
+  { name: 'purple' as const, hex: '#a855f7', label: 'Purple' },
+  { name: 'slate' as const, hex: '#64748b', label: 'Slate' },
+  { name: 'orange' as const, hex: '#f97316', label: 'Orange' }
+];
+
+export const getColorClasses = (color: string) => {
+  switch (color) {
+    case 'blue': return {
+      text: 'text-blue-600',
+      bg: 'bg-blue-50/70',
+      border: 'border-blue-200',
+      bgGradient: 'from-blue-600 to-cyan-700',
+      btn: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
+      badge: 'bg-blue-50 text-blue-700 border-blue-200'
+    };
+    case 'rose': return {
+      text: 'text-rose-600',
+      bg: 'bg-rose-50/70',
+      border: 'border-rose-200',
+      bgGradient: 'from-rose-600 to-pink-700',
+      btn: 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500',
+      badge: 'bg-rose-50 text-rose-700 border-rose-200'
+    };
+    case 'emerald': return {
+      text: 'text-emerald-600',
+      bg: 'bg-emerald-50/70',
+      border: 'border-emerald-200',
+      bgGradient: 'from-emerald-600 to-teal-700',
+      btn: 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500',
+      badge: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    };
+    case 'amber': return {
+      text: 'text-amber-600',
+      bg: 'bg-amber-50/70',
+      border: 'border-amber-200',
+      bgGradient: 'from-amber-500 to-orange-600',
+      btn: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
+      badge: 'bg-amber-50 text-amber-700 border-amber-200'
+    };
+    case 'purple': return {
+      text: 'text-purple-600',
+      bg: 'bg-purple-50/70',
+      border: 'border-purple-200',
+      bgGradient: 'from-purple-600 to-fuchsia-700',
+      btn: 'bg-purple-600 hover:bg-purple-700 focus:ring-purple-500',
+      badge: 'bg-purple-50 text-purple-700 border-purple-200'
+    };
+    case 'slate': return {
+      text: 'text-slate-700',
+      bg: 'bg-slate-100',
+      border: 'border-slate-200',
+      bgGradient: 'from-slate-700 to-slate-900',
+      btn: 'bg-slate-705 hover:bg-slate-800 focus:ring-slate-500',
+      badge: 'bg-slate-100 text-slate-800 border-slate-200'
+    };
+    case 'orange': return {
+      text: 'text-orange-600',
+      bg: 'bg-orange-50/70',
+      border: 'border-orange-200',
+      bgGradient: 'from-orange-500 to-red-650',
+      btn: 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-505',
+      badge: 'bg-orange-50 text-orange-750 border-orange-200'
+    };
+    case 'indigo':
+    default: return {
+      text: 'text-indigo-600',
+      bg: 'bg-indigo-50/70',
+      border: 'border-indigo-200',
+      bgGradient: 'from-indigo-600 to-violet-700',
+      btn: 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500',
+      badge: 'bg-indigo-50 text-indigo-700 border-indigo-200'
+    };
+  }
+};
+
 export const AdminPortal: React.FC = () => {
   const { 
     vendors, applications, orders, products,
-    approveApplication, rejectApplication, setSelectedVendorId, setRole
+    approveApplication, rejectApplication, setSelectedVendorId, setRole,
+    portalSettings, updatePortalSettings, loginLogs, clearLoginLogs
   } = useApp();
 
   const { t, isRTL } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'verified' | 'kyc' | 'rules'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'verified' | 'kyc' | 'rules' | 'settings'>('overview');
   const [kycRejectId, setKycRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   
+  // Customization State Form
+  const [adminTitle, setAdminTitle] = useState(portalSettings.adminTitle);
+  const [adminLogo, setAdminLogo] = useState(portalSettings.adminLogo);
+  const [adminColor, setAdminColor] = useState(portalSettings.adminColor);
+  const [vendorTitle, setVendorTitle] = useState(portalSettings.vendorTitle);
+  const [vendorLogo, setVendorLogo] = useState(portalSettings.vendorLogo);
+  const [vendorColor, setVendorColor] = useState(portalSettings.vendorColor);
+  const [logSearch, setLogSearch] = useState('');
+  const [logRoleFilter, setLogRoleFilter] = useState('All');
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [confirmClearLogs, setConfirmClearLogs] = useState(false);
+
   // Table search & filters
   const [leaderboardSearch, setLeaderboardSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -63,14 +159,17 @@ export const AdminPortal: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const colors = getColorClasses(portalSettings.adminColor);
+
   return (
     <div className="space-y-6">
       
       {/* Dynamic Upper Panel */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900">
-            {t('operationsLedgerTitle')}
+          <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight text-slate-900 flex items-center gap-2">
+            <span className="text-3xl filter drop-shadow-sm">{portalSettings.adminLogo}</span>
+            <span>{portalSettings.adminTitle || t('operationsLedgerTitle')}</span>
           </h1>
           <p className="text-sm text-slate-450 mt-1">
             {t('descAdminPortal')}
@@ -78,7 +177,7 @@ export const AdminPortal: React.FC = () => {
         </div>
 
         {/* Top bar quick tabs */}
-        <div className="flex gap-1.5 bg-slate-200/60 p-1 rounded-lg border border-slate-200 text-xs font-semibold self-start md:self-auto">
+        <div className="flex flex-wrap gap-1.5 bg-slate-200/60 p-1 rounded-lg border border-slate-200 text-xs font-semibold self-start md:self-auto">
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-3 py-1.5 rounded-md cursor-pointer transition-all ${
@@ -103,7 +202,7 @@ export const AdminPortal: React.FC = () => {
           >
             {t('onboardingApps')}
             {pendingOnboardCount > 0 && (
-              <span className={`absolute -top-1.5 ${isRTL ? '-left-1' : '-right-1'} bg-rose-600 text-white text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-bold`}>
+              <span className="absolute -top-1.5 -right-1.5 bg-rose-650 text-white text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-bold shadow-xs">
                 {pendingOnboardCount}
               </span>
             )}
@@ -115,6 +214,14 @@ export const AdminPortal: React.FC = () => {
             }`}
           >
             {t('rulesAuditTab')}
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-3 py-1.5 rounded-md cursor-pointer transition-all ${
+              activeTab === 'settings' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-650 hover:text-slate-900'
+            }`}
+          >
+            {isRTL ? "الإعدادات والسجلات ⚙️" : "Settings & Logs ⚙️"}
           </button>
         </div>
       </div>
@@ -541,6 +648,373 @@ export const AdminPortal: React.FC = () => {
             className="animate-fadeIn"
           >
             <RulesAuditDashboard />
+          </motion.div>
+        )}
+        {activeTab === 'settings' && (
+          <motion.div
+            key="settings-tab"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="space-y-6"
+          >
+            {/* Branding Settings Form */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <h2 className="text-lg font-bold font-display text-slate-900 mb-4 flex items-center gap-2">
+                <span className="p-1 rounded bg-slate-100 text-slate-800">🎨</span>
+                <span>{isRTL ? 'إعدادات هوية ومظهر لوحات التحكم' : 'Dashboard Branding & Identity Customizations'}</span>
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Admin Dashboard Personalization */}
+                <div className="p-5 bg-slate-50/50 rounded-xl border border-slate-200/60 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                      <span className="p-1 rounded bg-indigo-50 text-indigo-650 text-xs">👤</span>
+                      {isRTL ? 'لوحة تحكم المدير (الآدمن)' : 'Admin Dashboard Customization'}
+                    </h3>
+                    <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-mono font-bold">Admin Portal</span>
+                  </div>
+
+                  {/* Title Customizer */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 block">
+                      {isRTL ? 'عنوان لوحة تحكم المدير:' : 'Admin Dashboard Title:'}
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-hidden focus:border-indigo-500"
+                      value={adminTitle}
+                      onChange={(e) => setAdminTitle(e.target.value)}
+                      placeholder="e.g. Operations Ledger Suite"
+                    />
+                  </div>
+
+                  {/* Icon Emoji Customizer */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 block">
+                      {isRTL ? 'شعار المدير (إيموجي):' : 'Admin Header Logo (Emoji):'}
+                    </label>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <input
+                        type="text"
+                        maxLength={4}
+                        className="w-12 text-center px-1 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:outline-hidden"
+                        value={adminLogo}
+                        onChange={(e) => setAdminLogo(e.target.value)}
+                      />
+                      <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none">
+                        {EM_LIST.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => setAdminLogo(emoji)}
+                            className={`w-7 h-7 rounded-md text-xs flex items-center justify-center transition-all cursor-pointer ${
+                              adminLogo === emoji ? 'bg-indigo-600 text-white scale-110 shadow-sm' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Theme Color Customizer */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 block">
+                      {isRTL ? 'اللون الرئيسي لمظهر المدير:' : 'Admin Accent Color Theme:'}
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {COLOR_LIST.map((color) => (
+                        <button
+                          key={color.name}
+                          type="button"
+                          onClick={() => setAdminColor(color.name)}
+                          className={`flex items-center gap-1.5 p-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                            adminColor === color.name ? 'border-indigo-650 bg-indigo-50 text-indigo-750 font-extrabold shadow-sm' : 'border-slate-200 bg-white text-slate-650 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0" style={{ backgroundColor: color.hex }} />
+                          <span className="truncate">{color.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vendor Dashboard Personalization */}
+                <div className="p-5 bg-slate-50/50 rounded-xl border border-slate-200/60 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-slate-800 flex items-center gap-1.5">
+                      <span className="p-1 rounded bg-amber-50 text-amber-650 text-xs">🏬</span>
+                      {isRTL ? 'لوحة تحكم البائع (التاجر)' : 'Vendor Dashboard Customization'}
+                    </h3>
+                    <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-mono font-bold">Vendor Portal</span>
+                  </div>
+
+                  {/* Title Customizer */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 block">
+                      {isRTL ? 'عنوان لوحة البائع:' : 'Vendor Dashboard Title:'}
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-hidden focus:border-amber-500"
+                      value={vendorTitle}
+                      onChange={(e) => setVendorTitle(e.target.value)}
+                      placeholder="e.g. Vendor Storefront Suite"
+                    />
+                  </div>
+
+                  {/* Icon Emoji Customizer */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 block">
+                      {isRTL ? 'شعار البائع (إيموجي):' : 'Vendor Header Logo (Emoji):'}
+                    </label>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <input
+                        type="text"
+                        maxLength={4}
+                        className="w-12 text-center px-1 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:outline-hidden"
+                        value={vendorLogo}
+                        onChange={(e) => setVendorLogo(e.target.value)}
+                      />
+                      <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none">
+                        {VEN_EM_LIST.map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => setVendorLogo(emoji)}
+                            className={`w-7 h-7 rounded-md text-xs flex items-center justify-center transition-all cursor-pointer ${
+                              vendorLogo === emoji ? 'bg-amber-600 text-white scale-110 shadow-sm' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Theme Color Customizer */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-500 block">
+                      {isRTL ? 'اللون الرئيسي لمظهر البائع:' : 'Vendor Accent Color Theme:'}
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {COLOR_LIST.map((color) => (
+                        <button
+                          key={color.name}
+                          type="button"
+                          onClick={() => setVendorColor(color.name)}
+                          className={`flex items-center gap-1.5 p-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                            vendorColor === color.name ? 'border-amber-600 bg-amber-50 text-amber-750 font-extrabold shadow-sm' : 'border-slate-200 bg-white text-slate-650 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0" style={{ backgroundColor: color.hex }} />
+                          <span className="truncate">{color.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save & Confirm Feedbacks */}
+              <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-slate-100 pt-5">
+                <p className="text-xs text-slate-500">
+                  {isRTL ? 'تطبق التغييرات محلياً فوراً بمجرد الحفظ.' : 'Branding guidelines update across the entire app configuration instantly.'}
+                </p>
+
+                <div className="flex items-center gap-3">
+                  {saveSuccess && (
+                    <span className="text-xs text-emerald-600 font-bold flex items-center gap-1 animate-pulse">
+                      <span>✓</span>
+                      {isRTL ? 'تم حفظ التعديلات بنجاح وتطبيق المظهر!' : 'Custom portal styles initialized perfectly!'}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updatePortalSettings({
+                        adminTitle,
+                        adminLogo,
+                        adminColor,
+                        vendorTitle,
+                        vendorLogo,
+                        vendorColor
+                      });
+                      setSaveSuccess(true);
+                      setTimeout(() => setSaveSuccess(false), 2500);
+                    }}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-xs cursor-pointer ${colors.btn}`}
+                  >
+                    {isRTL ? 'حفظ وتحديث هوية المنصة' : 'Apply Brand Theme'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Authentications Audit Log */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold font-display text-slate-900 flex items-center gap-2">
+                    <span className="p-1 rounded bg-rose-50 text-rose-600 text-sm">🔒</span>
+                    <span>{isRTL ? 'سجل رقابة عمليات تسجيل الدخول' : 'Security Access & Login Logs'}</span>
+                  </h2>
+                  <p className="text-xs text-slate-450 mt-1">
+                    {isRTL ? 'سجل أمني فوري يراقب عمليات تسجيل الدخول لضمان موثوقية العمليات وضبط الهوية.' : 'Real-time security log tracking authentication keys, roles, and status.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  {confirmClearLogs ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-rose-600 font-bold">{isRTL ? 'تأكيد الحذف؟' : 'Ready to clear?'}</span>
+                      <button
+                        onClick={() => {
+                          clearLoginLogs();
+                          setConfirmClearLogs(false);
+                        }}
+                        className="px-2 py-1 bg-rose-600 text-white rounded text-[10px] font-bold cursor-pointer"
+                      >
+                        {isRTL ? 'نعم، مسح' : 'Yes, wipe'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmClearLogs(false)}
+                        className="px-2 py-1 bg-slate-200 text-slate-700 rounded text-[10px] font-bold cursor-pointer"
+                      >
+                        {isRTL ? 'إلغاء' : 'Cancel'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmClearLogs(true)}
+                      disabled={loginLogs.length === 0}
+                      className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold disabled:opacity-40 transition-all cursor-pointer"
+                    >
+                      {isRTL ? 'تفريغ السجل الأمني' : 'Wipe Audit Trail'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Logs Search Filter Panel */}
+              <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-450 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={logSearch}
+                    onChange={(e) => setLogSearch(e.target.value)}
+                    placeholder={isRTL ? 'البحث بالبريد الإلكتروني للتاجر او الاسم...' : 'Query by email, display name, profile...'}
+                    className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-slate-300"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500 font-medium shrink-0">{isRTL ? 'تصفية بالرتبة:' : 'Role:'}</span>
+                  <select
+                    value={logRoleFilter}
+                    onChange={(e) => setLogRoleFilter(e.target.value)}
+                    className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden"
+                  >
+                    <option value="All">{isRTL ? 'الكل' : 'All Roles'}</option>
+                    <option value="Admin">{isRTL ? 'مدير منصة (Admin)' : 'Admin'}</option>
+                    <option value="Vendor">{isRTL ? 'شريك بيع (Vendor)' : 'Vendor'}</option>
+                    <option value="Customer">{isRTL ? 'عميل تسوق (Customer)' : 'Customer'}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Logs Table Area */}
+              <div className="overflow-x-auto">
+                <table className={`w-full whitespace-nowrap text-xs text-slate-650 ${isRTL ? 'text-right' : 'text-left'}`}>
+                  <thead className="bg-slate-50 text-[10px] font-bold text-slate-450 uppercase tracking-wider border-b border-slate-200">
+                    <tr>
+                      <th className="px-6 py-3">{isRTL ? 'التوقيت اليومي' : 'Timestamp'}</th>
+                      <th className="px-6 py-3">{isRTL ? 'الملف الشخصي للحساب' : 'Account profile'}</th>
+                      <th className="px-6 py-3">{isRTL ? 'رتبة المستخدم الرقمي' : 'Assigned Role'}</th>
+                      <th className="px-6 py-3">{isRTL ? 'قناة المصادقة' : 'Provider Channel'}</th>
+                      <th className="px-6 py-3">{isRTL ? 'حالة الدخول' : 'Access Status'}</th>
+                      <th className="px-6 py-3">{isRTL ? 'عنوان IP للمصادقة' : 'Secure IP Address'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {(() => {
+                      const filtered = loginLogs.filter(log => {
+                        const emailMatches = log.email.toLowerCase().includes(logSearch.toLowerCase());
+                        const nameMatches = log.displayName.toLowerCase().includes(logSearch.toLowerCase());
+                        const matchesSearch = emailMatches || nameMatches;
+                        const matchesRole = logRoleFilter === 'All' || log.role === logRoleFilter;
+                        return matchesSearch && matchesRole;
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 font-medium">
+                              {isRTL ? 'لم يتم العثور على سجلات تطابق البحث.' : 'No audit entries logged for this specific query.'}
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return filtered.map(log => {
+                        let statusColor = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+                        if (log.status === 'Failed') {
+                          statusColor = 'text-rose-700 bg-rose-50 border-rose-200';
+                        }
+                        
+                        let roleColor = 'bg-slate-100 text-slate-800';
+                        if (log.role === 'Admin') roleColor = 'bg-indigo-50 text-indigo-700 border border-indigo-150';
+                        if (log.role === 'Vendor') roleColor = 'bg-amber-50 text-amber-705 border border-amber-150';
+
+                        return (
+                          <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                            {/* Timestamp */}
+                            <td className="px-6 py-3.5 font-mono text-slate-500 text-[11px]">
+                              {new Date(log.timestamp).toLocaleString(isRTL ? 'ar-EG' : 'en-US')}
+                            </td>
+                            {/* User Profile */}
+                            <td className="px-6 py-3.5">
+                              <div className="font-semibold text-slate-800">{log.displayName}</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{log.email}</div>
+                            </td>
+                            {/* Role badge */}
+                            <td className="px-6 py-3.5">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${roleColor}`}>
+                                {log.role}
+                              </span>
+                            </td>
+                            {/* Method */}
+                            <td className="px-6 py-3.5 font-semibold text-slate-700">
+                              <span className="inline-flex items-center gap-1 font-mono text-[11px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                {log.method}
+                              </span>
+                            </td>
+                            {/* Status badge */}
+                            <td className="px-6 py-3.5">
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${statusColor}`}>
+                                {log.status}
+                              </span>
+                            </td>
+                            {/* Secure IP Address */}
+                            <td className="px-6 py-3.5 font-mono text-[11px] text-slate-450">
+                              {log.ipAddress}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

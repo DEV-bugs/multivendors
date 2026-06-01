@@ -16,7 +16,7 @@ import {
   User 
 } from 'firebase/auth';
 import { db, auth, OperationType, handleFirestoreError } from '../lib/firebase';
-import { Product, Vendor, VendorApplication, Order, CartItem } from '../types';
+import { Product, Vendor, VendorApplication, Order, CartItem, PortalSettings, LoginLog } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_VENDORS, INITIAL_APPLICATIONS, INITIAL_ORDERS } from '../mockData';
 
 type Role = 'Admin' | 'Vendor' | 'Customer';
@@ -70,6 +70,13 @@ interface AppContextType {
   signInWithDemo: (selectedRole?: Role, customVendorId?: string) => void;
   googleAccessToken: string | null;
   setGoogleAccessToken: (token: string | null) => void;
+
+  // Customizable settings & Login Logs
+  portalSettings: PortalSettings;
+  updatePortalSettings: (settings: PortalSettings) => void;
+  loginLogs: LoginLog[];
+  addLoginLog: (email: string, displayName: string, logRole: Role, method: 'Google' | 'Demo', status: 'Success' | 'Failed') => void;
+  clearLoginLogs: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -101,6 +108,97 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentView, setCurrentView] = useState<'home' | 'product-detail' | 'cart' | 'checkout' | 'order-success'>('home');
   const [selectedProductId, setSelectedProductId] = useState<string>('p1');
   const [lastPlacedOrderId, setLastPlacedOrderId] = useState<string>('');
+
+  // Customizable Portal Settings & Login Logs State
+  const [portalSettings, setPortalSettings] = useState<PortalSettings>(() => {
+    const saved = localStorage.getItem('marketsaas_portal_settings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {
+      adminTitle: "SaaS Marketplace Operations Ledger",
+      adminLogo: "⚙️",
+      adminColor: "indigo",
+      vendorTitle: "SaaS Vendor Storefront Suite",
+      vendorLogo: "🏬",
+      vendorColor: "indigo",
+    };
+  });
+
+  const [loginLogs, setLoginLogs] = useState<LoginLog[]>(() => {
+    const saved = localStorage.getItem('marketsaas_login_logs');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return [
+      {
+        id: "log_init_1",
+        timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
+        email: "admin@marketsaas.com",
+        displayName: "SaaS Marketplace Administrator",
+        role: "Admin",
+        method: "Demo",
+        status: "Success",
+        ipAddress: "127.0.0.1"
+      },
+      {
+        id: "log_init_2",
+        timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+        email: "apex@labs.com",
+        displayName: "Apex Labs Support",
+        role: "Vendor",
+        method: "Demo",
+        status: "Success",
+        ipAddress: "192.168.1.10"
+      },
+      {
+        id: "log_init_3",
+        timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+        email: "customer@marketsaas.com",
+        displayName: "Demo Customer Account",
+        role: "Customer",
+        method: "Demo",
+        status: "Success",
+        ipAddress: "34.120.45.89"
+      }
+    ];
+  });
+
+  const updatePortalSettings = (newSettings: PortalSettings) => {
+    setPortalSettings(newSettings);
+    localStorage.setItem('marketsaas_portal_settings', JSON.stringify(newSettings));
+  };
+
+  const addLoginLog = (email: string, displayName: string, logRole: Role, method: 'Google' | 'Demo', status: 'Success' | 'Failed') => {
+    const newLog: LoginLog = {
+      id: 'log_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+      timestamp: new Date().toISOString(),
+      email: email || 'unknown@marketsaas.com',
+      displayName: displayName || 'Anonymous User',
+      role: logRole,
+      method,
+      status,
+      ipAddress: '127.0.0.1'
+    };
+    setLoginLogs(prev => {
+      const next = [newLog, ...prev].slice(0, 50);
+      localStorage.setItem('marketsaas_login_logs', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const clearLoginLogs = () => {
+    setLoginLogs([]);
+    localStorage.removeItem('marketsaas_login_logs');
+  };
 
   // Auth User track state
   const [user, setUser] = useState<User | null>(null);
@@ -276,6 +374,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     provider.addScope('https://www.googleapis.com/auth/drive.file');
     try {
       const result = await signInWithPopup(auth, provider);
+      const email = result.user?.email || '';
+      const displayName = result.user?.displayName || 'Google User';
+      
+      let gRole: Role = 'Customer';
+      if (email.toLowerCase() === 'dzsayto@gmail.com' || email.toLowerCase() === 'admin@marketsaas.com') {
+        gRole = 'Admin';
+      } else {
+        const isVendor = vendors.some(v => v.ownerEmail.toLowerCase() === email.toLowerCase());
+        if (isVendor) {
+          gRole = 'Vendor';
+        }
+      }
+      
+      addLoginLog(email, displayName, gRole, 'Google', 'Success');
+
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential?.accessToken) {
         setGoogleAccessToken(credential.accessToken);
@@ -292,6 +405,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         errMsg = 'A firewalled or offline network status was detected.';
       }
       setAuthError(errMsg);
+      addLoginLog('unknown@marketsaas.com', 'Google Authentication', 'Customer', 'Google', 'Failed');
     }
   };
 
@@ -307,6 +421,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         photoURL: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100',
         emailVerified: true
       };
+      addLoginLog('dzsayto@gmail.com', 'MarketSaaS Administrator', 'Admin', 'Demo', 'Success');
     } else if (selectedRole === 'Vendor') {
       const vId = customVendorId || 'v1';
       const targetVendor = vendors.find(v => v.id === vId) || INITIAL_VENDORS[0];
@@ -317,6 +432,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         photoURL: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=100',
         emailVerified: true
       };
+      addLoginLog(targetVendor.ownerEmail, `${targetVendor.name} Vendor`, 'Vendor', 'Demo', 'Success');
     } else {
       simulatedUser = {
         uid: 'demo_customer_uid_dzsayto',
@@ -325,6 +441,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100',
         emailVerified: true
       };
+      addLoginLog('customer@marketsaas.com', 'Demo Customer Account', 'Customer', 'Demo', 'Success');
     }
     setUser(simulatedUser);
   };
@@ -575,7 +692,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       resetToDefault,
       user, signInWithGoogle, signOutUser, dbReady,
       authError, setAuthError, signInWithDemo,
-      googleAccessToken, setGoogleAccessToken
+      googleAccessToken, setGoogleAccessToken,
+      portalSettings, updatePortalSettings,
+      loginLogs, addLoginLog, clearLoginLogs
     }}>
       {children}
     </AppContext.Provider>

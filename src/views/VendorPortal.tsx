@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useLanguage } from '../context/LanguageContext';
+import { VEN_EM_LIST, COLOR_LIST, getColorClasses } from './AdminPortal';
 import { Product, Order } from '../types';
 import { DynamicBarChart } from '../components/Charts';
 import { doc, setDoc } from 'firebase/firestore';
@@ -16,12 +17,18 @@ export const VendorPortal: React.FC = () => {
   const { 
     selectedVendorId, vendors, products, orders,
     addProduct, updateProduct, deleteProduct,
-    googleAccessToken
+    googleAccessToken, portalSettings, updatePortalSettings
   } = useApp();
 
   const { t, isRTL } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'analytics' | 'catalog' | 'orders'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'catalog' | 'orders' | 'settings'>('analytics');
+
+  // Vendor branding customization states
+  const [vendorTitle, setVendorTitle] = useState(portalSettings.vendorTitle || '');
+  const [vendorLogo, setVendorLogo] = useState(portalSettings.vendorLogo || '🏬');
+  const [vendorColor, setVendorColor] = useState(portalSettings.vendorColor || 'indigo');
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Google Drive upload states
   const [uploading, setUploading] = useState(false);
@@ -254,19 +261,21 @@ export const VendorPortal: React.FC = () => {
     }
   };
 
+  const colors = getColorClasses(portalSettings.vendorColor);
+
   return (
     <div className="space-y-6">
       
       {/* Merchant Title bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div className="flex items-center gap-3">
-          <span className="text-3xl bg-slate-900 w-14 h-14 rounded-2xl flex items-center justify-center border border-slate-700 shadow-sm shrink-0">
-            {activeVendor.logo}
+          <span className="text-3xl bg-slate-900 w-14 h-14 rounded-2xl flex items-center justify-center border border-slate-700 shadow-sm shrink-0 filter drop-shadow-sm">
+            {portalSettings.vendorLogo || activeVendor.logo}
           </span>
           <div>
             <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
               <h1 className="text-2xl font-bold font-display tracking-tight text-slate-900">
-                {activeVendor.name} {t('opsCenter')}
+                {portalSettings.vendorTitle || activeVendor.name} {t('opsCenter')}
               </h1>
               <span className="bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-bold rounded border border-slate-200 font-mono">
                 {t('sellerId')}: {activeVendor.id}
@@ -279,12 +288,12 @@ export const VendorPortal: React.FC = () => {
         </div>
 
         {/* Action button bar */}
-        <div className="flex gap-2 text-xs font-semibold">
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
           <button
             onClick={() => setActiveTab('analytics')}
             className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
               activeTab === 'analytics' 
-                ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                ? `${colors.btn} text-white shadow-md` 
                 : 'bg-white text-slate-650 border-slate-250 hover:bg-slate-50'
             }`}
           >
@@ -294,7 +303,7 @@ export const VendorPortal: React.FC = () => {
             onClick={() => setActiveTab('catalog')}
             className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
               activeTab === 'catalog' 
-                ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                ? `${colors.btn} text-white shadow-md` 
                 : 'bg-white text-slate-650 border-slate-250 hover:bg-slate-50'
             }`}
           >
@@ -304,7 +313,7 @@ export const VendorPortal: React.FC = () => {
             onClick={() => setActiveTab('orders')}
             className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer relative ${
               activeTab === 'orders' 
-                ? 'bg-slate-900 text-white border-slate-900 shadow-sm' 
+                ? `${colors.btn} text-white shadow-md` 
                 : 'bg-white text-slate-650 border-slate-250 hover:bg-slate-50'
             }`}
           >
@@ -312,6 +321,16 @@ export const VendorPortal: React.FC = () => {
             {vendorOrders.some(o => o.status === 'Pending') && (
               <span className={`absolute -top-1 ${isRTL ? 'left-0' : 'right-0'} bg-amber-500 w-2.5 h-2.5 rounded-full ring-2 ring-white animate-pulse`} />
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+              activeTab === 'settings' 
+                ? `${colors.btn} text-white shadow-md` 
+                : 'bg-white text-slate-650 border-slate-250 hover:bg-slate-50'
+            }`}
+          >
+            {isRTL ? 'إعدادات المتجر ⚙️' : 'Settings ⚙️'}
           </button>
         </div>
       </div>
@@ -632,6 +651,128 @@ export const VendorPortal: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </motion.div>
+        )}
+        {activeTab === 'settings' && (
+          <motion.div
+            key="settings-tab"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-4 animate-fadeIn"
+          >
+            <div>
+              <h3 className="font-bold text-slate-800 text-lg font-display">{isRTL ? "إعدادات وهوية المتجر" : "Storefront Branding & Customizer"}</h3>
+              <p className="text-xs text-slate-400">{isRTL ? "قم بتعديل الشعار (الإيموجي)، والاسم المخصص، والسمة البصرية لمتجر البائع الخاص بك لكي يناسب علامتك التجارية." : "Tweak your storefront emoji, custom titles, and active branding palettes to reflect your unique hardware brand."}</p>
+            </div>
+
+            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Storefront Title Customizer */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-500 block">
+                    {isRTL ? 'اسم متجر البائع المخصص:' : 'Storefront Heading Title:'}
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-hidden focus:border-amber-500"
+                    value={vendorTitle}
+                    onChange={(e) => setVendorTitle(e.target.value)}
+                    placeholder="e.g. Apex Hardware Store"
+                  />
+                  <p className="text-[10px] text-slate-400 italic">
+                    {isRTL ? "هذا الاسم سيظهر على رأس لوحة تحكم المتجر والواجهة." : "This will override the default merchant profile title rendered in the app."}
+                  </p>
+                </div>
+
+                {/* Storefront Logo Customizer */}
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-500 block">
+                    {isRTL ? 'شعار المتجر (إيموجي):' : 'Storefront Logo (Emoji):'}
+                  </label>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <input
+                      type="text"
+                      maxLength={4}
+                      className="w-12 text-center px-1 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 focus:outline-hidden"
+                      value={vendorLogo}
+                      onChange={(e) => setVendorLogo(e.target.value)}
+                    />
+                    <div className="flex gap-1.5 overflow-x-auto py-1 scrollbar-none">
+                      {VEN_EM_LIST.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => setVendorLogo(emoji)}
+                          className={`w-7 h-7 rounded-md text-xs flex items-center justify-center transition-all cursor-pointer ${
+                            vendorLogo === emoji ? 'bg-amber-600 text-white scale-110 shadow-xs' : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Theme Color Customizer */}
+              <div className="space-y-2.5 pt-4 border-t border-slate-100">
+                <label className="text-xs font-semibold text-slate-500 block">
+                  {isRTL ? 'المظهر اللوني للمتجر:' : 'Storefront Color Paradigm Theme:'}
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+                  {COLOR_LIST.map((color) => (
+                    <button
+                      key={color.name}
+                      type="button"
+                      onClick={() => setVendorColor(color.name)}
+                      className={`flex items-center gap-2 p-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                        vendorColor === color.name ? 'border-amber-655 bg-amber-50 text-amber-750 font-extrabold shadow-xs' : 'border-slate-200 bg-white text-slate-650 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="w-3 h-3 rounded-full inline-block shrink-0" style={{ backgroundColor: color.hex }} />
+                      <span className="truncate">{color.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Apply Action Buttons */}
+              <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-slate-100 pt-5">
+                <p className="text-xs text-slate-500">
+                  {isRTL ? 'حفظ التعديلات يغير السمة والاسم فورياً عبر المتجر.' : 'Click apply to immediately store changes across this tenant ecosystem.'}
+                </p>
+
+                <div className="flex items-center gap-3">
+                  {saveSuccess && (
+                     <span className="text-xs text-emerald-600 font-bold flex items-center gap-1 animate-pulse">
+                       <span>✓</span>
+                       {isRTL ? 'تم الحفظ وتحديث الهوية البصرية!' : 'Tenant settings synchronized!'}
+                     </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updatePortalSettings({
+                        ...portalSettings,
+                        vendorTitle,
+                        vendorLogo,
+                        vendorColor
+                      });
+                      setSaveSuccess(true);
+                      setTimeout(() => setSaveSuccess(false), 2500);
+                    }}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white shadow-md cursor-pointer transition-all ${colors.btn}`}
+                  >
+                    {isRTL ? 'حفظ وتحديث الهوية' : 'Save & Propagate Settings'}
+                  </button>
+                </div>
+              </div>
+
             </div>
           </motion.div>
         )}
